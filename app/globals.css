@@ -1,0 +1,111 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&display=swap');
+
+:root {
+  /* Dark stadium night aesthetic */
+  --background: 220 20% 6%;
+  --foreground: 45 15% 92%;
+
+  --card: 220 18% 10%;
+  --card-foreground: 45 15% 92%;
+
+  --primary: 38 92% 55%;       /* Stadium amber/gold */
+  --primary-foreground: 220 20% 6%;
+
+  --secondary: 220 15% 15%;
+  --secondary-foreground: 45 15% 92%;
+
+  --muted: 220 15% 15%;
+  --muted-foreground: 220 10% 55%;
+
+  --accent: 162 75% 45%;       /* Green for go/live states */
+  --accent-foreground: 220 20% 6%;
+
+  --border: 220 15% 16%;
+  --input: 220 15% 13%;
+  --ring: 38 92% 55%;
+
+  --radius: 0.875rem;
+
+  /* Custom */
+  --glow-primary: 38 92% 55%;
+  --font-syne: 'Syne', system-ui;
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: var(--font-geist-sans, system-ui);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Prevent horizontal scroll on mobile */
+  overflow-x: hidden;
+}
+
+/* Premium glass card */
+.glass {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Glow effect for primary elements */
+.glow-amber {
+  box-shadow: 0 0 20px hsla(38, 92%, 55%, 0.25), 0 0 60px hsla(38, 92%, 55%, 0.1);
+}
+
+/* Shimmer loading skeleton */
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--muted)) 0%,
+    hsl(220 15% 22%) 50%,
+    hsl(var(--muted)) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s linear infinite;
+}
+
+/* Safe area padding for mobile */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 1rem);
+}
+
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: hsl(var(--background));
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 2px;
+}
+
+/* Map container */
+.map-container {
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+/* Animate in stagger utility */
+.stagger-1 { animation-delay: 0.05s; }
+.stagger-2 { animation-delay: 0.1s; }
+.stagger-3 { animation-delay: 0.15s; }
+.stagger-4 { animation-delay: 0.2s; }
+.stagger-5 { animation-delay: 0.25s; }
+
+// TODO(01:12): Configure Tailwind CSS and global styling
