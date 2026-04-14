@@ -79,3 +79,4 @@ function StageProgressBar() {
 }
 
 // TODO(01:12): Set up root layout and base landing page
+// TODO(01:12): Polish landing experience and entry flow
