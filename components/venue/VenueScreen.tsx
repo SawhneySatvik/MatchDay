@@ -340,3 +340,4 @@ function EmptyState({ message }: { message: string }) {
 }
 
 // TODO(01:12): Develop venue navigation and section overview UI
+// TODO(01:12): Optimize real-time coordination across flows
