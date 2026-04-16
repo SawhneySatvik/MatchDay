@@ -107,5 +107,3 @@ body {
 .stagger-3 { animation-delay: 0.15s; }
 .stagger-4 { animation-delay: 0.2s; }
 .stagger-5 { animation-delay: 0.25s; }
-
-// TODO(01:12): Configure Tailwind CSS and global styling

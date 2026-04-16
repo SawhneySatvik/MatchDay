@@ -72,7 +72,7 @@ export function TicketUpload() {
   });
 
   return (
-    <div className="flex flex-col items-center gap-6">
+    <div className="flex flex-col items-center gap-6 max-w-lg mx-auto lg:py-12">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}

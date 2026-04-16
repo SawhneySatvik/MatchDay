@@ -149,130 +149,157 @@ Rules:
         </div>
       </motion.div>
 
-      {/* Generating state */}
-      {isGenerating && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="flex flex-col items-center gap-4 py-12"
-        >
-          <div className="relative">
-            <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center">
-              <Sparkles className="w-7 h-7 text-primary animate-pulse-slow" />
-            </div>
-            <div className="absolute -inset-1 rounded-2xl border border-primary/20 animate-ping" />
-          </div>
-          <div className="text-center">
-            <p className="text-sm font-semibold">Building your plan...</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Gemini is reasoning over your seat, travel, and preferences
-            </p>
-          </div>
-          {/* Shimmer skeleton */}
-          <div className="w-full flex flex-col gap-3 mt-4">
-            {[80, 64, 72, 60].map((w, i) => (
-              <div key={i} className="flex gap-3 items-start">
-                <div className="w-10 h-10 rounded-xl shimmer flex-shrink-0" />
-                <div className="flex-1 flex flex-col gap-1.5">
-                  <div className={`h-3 rounded shimmer`} style={{ width: `${w}%` }} />
-                  <div className="h-2.5 rounded shimmer w-full" />
-                  <div className="h-2.5 rounded shimmer w-3/4" />
+      {/* Responsive layout: timeline + inline chat on desktop */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        {/* Timeline column (wider) */}
+        <div className="lg:col-span-3 flex flex-col gap-5">
+          {/* Generating state */}
+          {isGenerating && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex flex-col items-center gap-4 py-12"
+            >
+              <div className="relative">
+                <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+                  <Sparkles className="w-7 h-7 text-primary animate-pulse-slow" />
                 </div>
+                <div className="absolute -inset-1 rounded-2xl border border-primary/20 animate-ping" />
               </div>
-            ))}
-          </div>
-        </motion.div>
-      )}
-
-      {/* Timeline */}
-      {!isGenerating && plan.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="relative flex flex-col gap-0"
-        >
-          {/* Vertical line */}
-          <div className="absolute left-5 top-5 bottom-5 w-px bg-border" />
-
-          {plan.map((item, i) => {
-            const config = PLAN_TYPE_CONFIG[item.type] || PLAN_TYPE_CONFIG.break;
-            const Icon = config.icon;
-            const isLast = i === plan.length - 1;
-
-            return (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, x: -8 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.07 }}
-                className="flex gap-4 pb-5 relative"
-              >
-                {/* Icon node */}
-                <div
-                  className={cn(
-                    "w-10 h-10 rounded-xl border flex items-center justify-center flex-shrink-0 z-10 bg-background",
-                    config.bg
-                  )}
-                >
-                  <Icon className={cn("w-4 h-4", config.color)} />
-                </div>
-
-                {/* Content card */}
-                <div className="flex-1 glass rounded-2xl p-4 -mt-1">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="text-xs font-bold text-primary tracking-wider">
-                        {item.time}
-                      </p>
-                      <p className="text-sm font-semibold text-foreground mt-0.5">
-                        {item.title}
-                      </p>
+              <div className="text-center">
+                <p className="text-sm font-semibold">Building your plan...</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Gemini is reasoning over your seat, travel, and preferences
+                </p>
+              </div>
+              {/* Shimmer skeleton */}
+              <div className="w-full flex flex-col gap-3 mt-4">
+                {[80, 64, 72, 60].map((w, i) => (
+                  <div key={i} className="flex gap-3 items-start">
+                    <div className="w-10 h-10 rounded-xl shimmer flex-shrink-0" />
+                    <div className="flex-1 flex flex-col gap-1.5">
+                      <div className={`h-3 rounded shimmer`} style={{ width: `${w}%` }} />
+                      <div className="h-2.5 rounded shimmer w-full" />
+                      <div className="h-2.5 rounded shimmer w-3/4" />
                     </div>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
-                    {item.description}
-                  </p>
+                ))}
+              </div>
+            </motion.div>
+          )}
 
-                  {/* Gemini reasoning accordion */}
-                  {item.reasoning && (
-                    <div className="mt-2.5 pt-2.5 border-t border-border/60">
-                      <div className="flex items-start gap-1.5">
-                        <Sparkles className="w-3 h-3 text-primary mt-0.5 flex-shrink-0" />
-                        <p className="text-xs text-muted-foreground leading-relaxed">
-                          {item.reasoning}
-                        </p>
-                      </div>
+          {/* Timeline */}
+          {!isGenerating && plan.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="relative flex flex-col gap-0"
+            >
+              {/* Vertical line */}
+              <div className="absolute left-5 top-5 bottom-5 w-px bg-border" />
+
+              {plan.map((item, i) => {
+                const config = PLAN_TYPE_CONFIG[item.type] || PLAN_TYPE_CONFIG.break;
+                const Icon = config.icon;
+
+                return (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.07 }}
+                    className="flex gap-4 pb-5 relative"
+                  >
+                    {/* Icon node */}
+                    <div
+                      className={cn(
+                        "w-10 h-10 rounded-xl border flex items-center justify-center flex-shrink-0 z-10 bg-background",
+                        config.bg
+                      )}
+                    >
+                      <Icon className={cn("w-4 h-4", config.color)} />
                     </div>
-                  )}
-                </div>
-              </motion.div>
-            );
-          })}
-        </motion.div>
-      )}
 
-      {/* Empty / error */}
-      {!isGenerating && plan.length === 0 && (
-        <div className="text-center py-10">
-          <p className="text-sm text-muted-foreground">
-            Couldn't generate your plan.
-          </p>
-          <button
-            onClick={generatePlan}
-            className="mt-3 text-sm text-primary font-medium"
-          >
-            Try again
-          </button>
+                    {/* Content card */}
+                    <div className="flex-1 glass rounded-2xl p-4 -mt-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold text-primary tracking-wider">
+                            {item.time}
+                          </p>
+                          <p className="text-sm font-semibold text-foreground mt-0.5">
+                            {item.title}
+                          </p>
+                        </div>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
+                        {item.description}
+                      </p>
+
+                      {/* Gemini reasoning accordion */}
+                      {item.reasoning && (
+                        <div className="mt-2.5 pt-2.5 border-t border-border/60">
+                          <div className="flex items-start gap-1.5">
+                            <Sparkles className="w-3 h-3 text-primary mt-0.5 flex-shrink-0" />
+                            <p className="text-xs text-muted-foreground leading-relaxed">
+                              {item.reasoning}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </motion.div>
+          )}
+
+          {/* Empty / error */}
+          {!isGenerating && plan.length === 0 && (
+            <div className="text-center py-10">
+              <p className="text-sm text-muted-foreground">
+                Couldn't generate your plan.
+              </p>
+              <button
+                onClick={generatePlan}
+                className="mt-3 text-sm text-primary font-medium"
+              >
+                Try again
+              </button>
+            </div>
+          )}
         </div>
-      )}
 
-      {/* Floating chat button */}
+        {/* Desktop inline chat panel (hidden on mobile) */}
+        <div className="hidden lg:flex lg:col-span-2 flex-col">
+          {plan.length > 0 && (
+            <div className="sticky top-24 rounded-2xl border border-border bg-card overflow-hidden" style={{ height: "calc(100vh - 140px)" }}>
+              {/* Header */}
+              <div className="px-5 py-4 border-b border-border flex items-center gap-2">
+                <div className="w-7 h-7 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+                  <Sparkles className="w-3.5 h-3.5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold">MatchDay AI</p>
+                  <p className="text-xs text-muted-foreground">Your live concierge</p>
+                </div>
+              </div>
+              {/* Chat */}
+              <div className="flex-1 overflow-hidden" style={{ height: "calc(100% - 72px)" }}>
+                <StadiumChat />
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Mobile floating chat button (hidden on desktop) */}
       {plan.length > 0 && (
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.5 }}
-          className="fixed bottom-6 right-5 z-40"
+          className="fixed bottom-6 right-5 z-40 lg:hidden"
         >
           <button
             onClick={() => setIsChatOpen(true)}
@@ -284,7 +311,7 @@ Rules:
         </motion.div>
       )}
 
-      {/* Chat drawer */}
+      {/* Mobile chat drawer (hidden on desktop) */}
       <AnimatePresence>
         {isChatOpen && (
           <>
@@ -294,7 +321,7 @@ Rules:
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsChatOpen(false)}
-              className="fixed inset-0 bg-background/60 backdrop-blur-sm z-40"
+              className="fixed inset-0 bg-background/60 backdrop-blur-sm z-40 lg:hidden"
             />
 
             {/* Sheet */}
@@ -303,7 +330,7 @@ Rules:
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 28, stiffness: 300 }}
-              className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border rounded-t-3xl overflow-hidden"
+              className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border rounded-t-3xl overflow-hidden lg:hidden"
               style={{ height: "75dvh" }}
             >
               {/* Handle + header */}
@@ -337,8 +364,8 @@ Rules:
         )}
       </AnimatePresence>
 
-      {/* Bottom spacing for floating button */}
-      <div className="h-16" />
+      {/* Bottom spacing for floating button (mobile only) */}
+      <div className="h-16 lg:hidden" />
     </div>
   );
 }

@@ -112,193 +112,202 @@ export function TravelScreen() {
         </p>
       </motion.div>
 
-      {/* Map */}
-      {venueCoords && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.98 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.1 }}
-        >
-          <VenueMap
-            venueCoords={venueCoords}
-            userCoords={preferences.locationCoords}
-            mode="travel"
-          />
-        </motion.div>
-      )}
-
-      {/* Loading state */}
-      {loading && (
-        <div className="flex flex-col items-center gap-3 py-8">
-          <div className="relative">
-            <Loader2 className="w-8 h-8 text-primary animate-spin" />
-            <div className="absolute inset-0 rounded-full bg-primary/10 animate-ping" />
-          </div>
-          <div className="text-center">
-            <p className="text-sm font-medium">Calculating your route...</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Factoring in crowd surge and kickoff timing
-            </p>
-          </div>
+      {/* Responsive two-column grid for desktop */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {/* Left column: Map */}
+        <div className="flex flex-col gap-5">
+          {venueCoords && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.1 }}
+              className="lg:sticky lg:top-24"
+            >
+              <VenueMap
+                venueCoords={venueCoords}
+                userCoords={preferences.locationCoords}
+                mode="travel"
+              />
+            </motion.div>
+          )}
         </div>
-      )}
 
-      {/* Travel options */}
-      {!loading && travelOptions.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="flex flex-col gap-3"
-        >
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-            Choose your route
-          </p>
+        {/* Right column: Options + CTA */}
+        <div className="flex flex-col gap-5">
+          {/* Loading state */}
+          {loading && (
+            <div className="flex flex-col items-center gap-3 py-8">
+              <div className="relative">
+                <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                <div className="absolute inset-0 rounded-full bg-primary/10 animate-ping" />
+              </div>
+              <div className="text-center">
+                <p className="text-sm font-medium">Calculating your route...</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Factoring in crowd surge and kickoff timing
+                </p>
+              </div>
+            </div>
+          )}
 
-          {travelOptions.map((option, i) => {
-            const Icon = MODE_ICONS[option.mode] || Train;
-            const isSelected = selectedTravel?.mode === option.mode;
-            const optionId = `${option.mode}-${i}`;
-            const isExpanded = expandedId === optionId;
+          {/* Travel options */}
+          {!loading && travelOptions.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+              className="flex flex-col gap-3"
+            >
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                Choose your route
+              </p>
 
-            return (
-              <motion.div
-                key={optionId}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.07 }}
-              >
-                <div
-                  className={cn(
-                    "rounded-2xl border transition-all overflow-hidden",
-                    isSelected ? "border-primary" : "border-border",
-                    option.recommended && !isSelected && "border-primary/30"
-                  )}
-                >
-                  {/* Option header */}
-                  <button
-                    onClick={() => {
-                      setSelectedTravel(option);
-                      setExpandedId(isExpanded ? null : optionId);
-                    }}
-                    className={cn(
-                      "w-full flex items-center gap-4 p-4 text-left transition-colors",
-                      isSelected ? "bg-primary/5" : "bg-card"
-                    )}
+              {travelOptions.map((option, i) => {
+                const Icon = MODE_ICONS[option.mode] || Train;
+                const isSelected = selectedTravel?.label === option.label;
+                const optionId = `${option.mode}-${i}`;
+                const isExpanded = expandedId === optionId;
+
+                return (
+                  <motion.div
+                    key={optionId}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.07 }}
                   >
-                    {/* Icon */}
                     <div
                       className={cn(
-                        "w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0",
-                        isSelected
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted text-muted-foreground"
+                        "rounded-2xl border transition-all overflow-hidden",
+                        isSelected ? "border-primary" : "border-border",
+                        option.recommended && !isSelected && "border-primary/30"
                       )}
                     >
-                      <Icon className="w-5 h-5" />
-                    </div>
-
-                    {/* Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-sm font-semibold text-foreground">
-                          {option.label}
-                        </p>
-                        {option.recommended && (
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-accent/10 text-accent border border-accent/20">
-                            Best option
-                          </span>
+                      {/* Option header */}
+                      <button
+                        onClick={() => {
+                          setSelectedTravel(option);
+                          setExpandedId(isExpanded ? null : optionId);
+                        }}
+                        className={cn(
+                          "w-full flex items-center gap-4 p-4 text-left transition-colors",
+                          isSelected ? "bg-primary/5" : "bg-card"
                         )}
-                      </div>
-                      <div className="flex items-center gap-3 mt-1">
-                        <div className="flex items-center gap-1.5">
-                          <Clock className="w-3 h-3 text-muted-foreground" />
-                          <span className="text-xs text-muted-foreground">
-                            {option.duration}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <AlarmClock className="w-3 h-3 text-primary" />
-                          <span className="text-xs font-medium text-primary">
-                            Leave by {option.leaveBy}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Expand / check */}
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      {isSelected && (
-                        <CheckCircle2 className="w-5 h-5 text-primary" />
-                      )}
-                      {isExpanded ? (
-                        <ChevronUp className="w-4 h-4 text-muted-foreground" />
-                      ) : (
-                        <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                      )}
-                    </div>
-                  </button>
-
-                  {/* Expanded detail */}
-                  <AnimatePresence>
-                    {isExpanded && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="overflow-hidden"
                       >
-                        <div className="px-4 pb-4 pt-0 border-t border-border">
-                          {/* Gemini reasoning */}
-                          <div className="mt-3 p-3 rounded-xl bg-primary/5 border border-primary/10">
-                            <div className="flex items-center gap-1.5 mb-1.5">
-                              <Sparkles className="w-3 h-3 text-primary" />
-                              <span className="text-xs font-medium text-primary">
-                                Why this timing
+                        {/* Icon */}
+                        <div
+                          className={cn(
+                            "w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0",
+                            isSelected
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-muted text-muted-foreground"
+                          )}
+                        >
+                          <Icon className="w-5 h-5" />
+                        </div>
+
+                        {/* Info */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="text-sm font-semibold text-foreground">
+                              {option.label}
+                            </p>
+                            {option.recommended && (
+                              <span className="text-xs px-2 py-0.5 rounded-full bg-accent/10 text-accent border border-accent/20">
+                                Best option
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-3 mt-1">
+                            <div className="flex items-center gap-1.5">
+                              <Clock className="w-3 h-3 text-muted-foreground" />
+                              <span className="text-xs text-muted-foreground">
+                                {option.duration}
                               </span>
                             </div>
-                            <p className="text-xs text-muted-foreground leading-relaxed">
-                              {option.reasoning}
-                            </p>
-                          </div>
-
-                          {/* Steps */}
-                          <div className="mt-3 flex flex-col gap-2">
-                            {option.steps.map((step, j) => (
-                              <div key={j} className="flex items-start gap-2.5">
-                                <div className="w-5 h-5 rounded-full bg-muted flex items-center justify-center flex-shrink-0 mt-0.5">
-                                  <span className="text-xs text-muted-foreground font-medium">
-                                    {j + 1}
-                                  </span>
-                                </div>
-                                <p className="text-xs text-foreground leading-relaxed">{step}</p>
-                              </div>
-                            ))}
+                            <div className="flex items-center gap-1.5">
+                              <AlarmClock className="w-3 h-3 text-primary" />
+                              <span className="text-xs font-medium text-primary">
+                                Leave by {option.leaveBy}
+                              </span>
+                            </div>
                           </div>
                         </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              </motion.div>
-            );
-          })}
-        </motion.div>
-      )}
 
-      {/* CTA */}
-      {selectedTravel && (
-        <motion.button
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          onClick={() => setStage("venue")}
-          className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm flex items-center justify-center gap-2 glow-amber hover:opacity-90 active:scale-[0.98] transition-all"
-        >
-          Explore the venue
-          <ChevronRight className="w-4 h-4" />
-        </motion.button>
-      )}
+                        {/* Expand / check */}
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          {isSelected && (
+                            <CheckCircle2 className="w-5 h-5 text-primary" />
+                          )}
+                          {isExpanded ? (
+                            <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                          ) : (
+                            <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                          )}
+                        </div>
+                      </button>
+
+                      {/* Expanded detail */}
+                      <AnimatePresence>
+                        {isExpanded && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="overflow-hidden"
+                          >
+                            <div className="px-4 pb-4 pt-0 border-t border-border">
+                              {/* Gemini reasoning */}
+                              <div className="mt-3 p-3 rounded-xl bg-primary/5 border border-primary/10">
+                                <div className="flex items-center gap-1.5 mb-1.5">
+                                  <Sparkles className="w-3 h-3 text-primary" />
+                                  <span className="text-xs font-medium text-primary">
+                                    Why this timing
+                                  </span>
+                                </div>
+                                <p className="text-xs text-muted-foreground leading-relaxed">
+                                  {option.reasoning}
+                                </p>
+                              </div>
+
+                              {/* Steps */}
+                              <div className="mt-3 flex flex-col gap-2">
+                                {option.steps.map((step, j) => (
+                                  <div key={j} className="flex items-start gap-2.5">
+                                    <div className="w-5 h-5 rounded-full bg-muted flex items-center justify-center flex-shrink-0 mt-0.5">
+                                      <span className="text-xs text-muted-foreground font-medium">
+                                        {j + 1}
+                                      </span>
+                                    </div>
+                                    <p className="text-xs text-foreground leading-relaxed">{step}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </motion.div>
+          )}
+
+          {/* CTA */}
+          {selectedTravel && (
+            <motion.button
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              onClick={() => setStage("venue")}
+              className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm flex items-center justify-center gap-2 glow-amber hover:opacity-90 active:scale-[0.98] transition-all"
+            >
+              Explore the venue
+              <ChevronRight className="w-4 h-4" />
+            </motion.button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

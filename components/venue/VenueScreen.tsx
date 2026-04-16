@@ -87,137 +87,147 @@ export function VenueScreen() {
         </p>
       </motion.div>
 
-      {/* Map */}
-      {venueCoords && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.98 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.1 }}
-        >
-          <VenueMap
-            venueCoords={venueCoords}
-            venueInfo={venueInfo}
-            mode="venue"
-          />
-        </motion.div>
-      )}
-
-      {/* AI Seat Tip */}
-      {ticket && (
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="p-4 rounded-2xl bg-primary/5 border border-primary/15"
-        >
-          <div className="flex items-start gap-3">
-            <Sparkles className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-            <div>
-              <p className="text-xs font-semibold text-primary mb-1">
-                For your seat
-              </p>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                You're in <span className="text-foreground font-medium">{ticket.stand}</span>.{" "}
-                {recommendedGate
-                  ? `Your quickest entry is ${recommendedGate.name} — currently showing ${recommendedGate.congestionLevel} congestion.`
-                  : "Loading gate recommendations..."}{" "}
-                {recommendedStalls.length > 0
-                  ? `Nearest ${preferences.foodPreference === "veg" ? "veg" : "food"} stall: ${recommendedStalls[0].name} (${recommendedStalls[0].walkTime} walk).`
-                  : ""}
-              </p>
-            </div>
-          </div>
-        </motion.div>
-      )}
-
-      {/* Tabs */}
-      <div className="flex gap-1 bg-muted rounded-xl p-1">
-        {TABS.map((tab) => {
-          const Icon = tab.icon;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={cn(
-                "flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium transition-all",
-                activeTab === tab.id
-                  ? "bg-card text-foreground shadow-sm"
-                  : "text-muted-foreground"
-              )}
+      {/* Responsive two-column grid for desktop */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {/* Left column: Map + AI Tip */}
+        <div className="flex flex-col gap-5">
+          {/* Map */}
+          {venueCoords && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.1 }}
+              className="lg:sticky lg:top-24"
             >
-              <Icon className="w-3.5 h-3.5" />
-              {tab.label}
-            </button>
-          );
-        })}
-      </div>
+              <VenueMap
+                venueCoords={venueCoords}
+                venueInfo={venueInfo}
+                mode="venue"
+              />
+            </motion.div>
+          )}
 
-      {/* Tab content */}
-      {!venueInfo ? (
-        <div className="flex items-center justify-center py-10 gap-3">
-          <Loader2 className="w-5 h-5 text-primary animate-spin" />
-          <p className="text-sm text-muted-foreground">Loading venue data...</p>
+          {/* AI Seat Tip — shows below map on mobile, pinned on desktop */}
+          {ticket && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+              className="p-4 rounded-2xl bg-primary/5 border border-primary/15"
+            >
+              <div className="flex items-start gap-3">
+                <Sparkles className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-xs font-semibold text-primary mb-1">
+                    For your seat
+                  </p>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    You're in <span className="text-foreground font-medium">{ticket.stand}</span>.{" "}
+                    {recommendedGate
+                      ? `Your quickest entry is ${recommendedGate.name} — currently showing ${recommendedGate.congestionLevel} congestion.`
+                      : "Loading gate recommendations..."}{" "}
+                    {recommendedStalls.length > 0
+                      ? `Nearest ${preferences.foodPreference === "veg" ? "veg" : "food"} stall: ${recommendedStalls[0].name} (${recommendedStalls[0].walkTime} walk).`
+                      : ""}
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
         </div>
-      ) : (
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col gap-3"
-        >
-          {activeTab === "food" && (
-            <>
-              {recommendedStalls.length === 0 ? (
-                <EmptyState message="No stalls match your preference for this venue." />
-              ) : (
-                recommendedStalls.map((stall, i) => (
-                  <FoodStallCard key={stall.id} stall={stall} index={i} />
-                ))
+
+        {/* Right column: Tabs + Content + CTA */}
+        <div className="flex flex-col gap-5">
+          {/* Tabs */}
+          <div className="flex gap-1 bg-muted rounded-xl p-1">
+            {TABS.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={cn(
+                    "flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium transition-all",
+                    activeTab === tab.id
+                      ? "bg-card text-foreground shadow-sm"
+                      : "text-muted-foreground"
+                  )}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Tab content */}
+          {!venueInfo ? (
+            <div className="flex items-center justify-center py-10 gap-3">
+              <Loader2 className="w-5 h-5 text-primary animate-spin" />
+              <p className="text-sm text-muted-foreground">Loading venue data...</p>
+            </div>
+          ) : (
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex flex-col gap-3"
+            >
+              {activeTab === "food" && (
+                <>
+                  {recommendedStalls.length === 0 ? (
+                    <EmptyState message="No stalls match your preference for this venue." />
+                  ) : (
+                    recommendedStalls.map((stall, i) => (
+                      <FoodStallCard key={stall.id} stall={stall} index={i} />
+                    ))
+                  )}
+                </>
               )}
-            </>
+
+              {activeTab === "gates" && (
+                <>
+                  {venueInfo.gates.map((gate, i) => (
+                    <GateCard key={gate.id} gate={gate} index={i} isRecommended={gate.id === recommendedGate?.id} />
+                  ))}
+                </>
+              )}
+
+              {activeTab === "facilities" && (
+                <>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Restrooms
+                  </p>
+                  {venueInfo.restrooms.map((r, i) => (
+                    <FacilityCard key={r.id} icon={Bath} name={r.name} detail={`${r.section} · ${r.walkTime} walk`} index={i} />
+                  ))}
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mt-2">
+                    Medical & ATMs
+                  </p>
+                  {venueInfo.medicalPoints.map((m, i) => (
+                    <FacilityCard key={m.id} icon={Cross} name={m.name} detail={m.section} index={i} />
+                  ))}
+                  {venueInfo.atms.map((a, i) => (
+                    <FacilityCard key={a.id} icon={CreditCard} name={a.name} detail={a.section} index={i} />
+                  ))}
+                </>
+              )}
+            </motion.div>
           )}
 
-          {activeTab === "gates" && (
-            <>
-              {venueInfo.gates.map((gate, i) => (
-                <GateCard key={gate.id} gate={gate} index={i} isRecommended={gate.id === recommendedGate?.id} />
-              ))}
-            </>
-          )}
-
-          {activeTab === "facilities" && (
-            <>
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Restrooms
-              </p>
-              {venueInfo.restrooms.map((r, i) => (
-                <FacilityCard key={r.id} icon={Bath} name={r.name} detail={`${r.section} · ${r.walkTime} walk`} index={i} />
-              ))}
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mt-2">
-                Medical & ATMs
-              </p>
-              {venueInfo.medicalPoints.map((m, i) => (
-                <FacilityCard key={m.id} icon={Cross} name={m.name} detail={m.section} index={i} />
-              ))}
-              {venueInfo.atms.map((a, i) => (
-                <FacilityCard key={a.id} icon={CreditCard} name={a.name} detail={a.section} index={i} />
-              ))}
-            </>
-          )}
-        </motion.div>
-      )}
-
-      {/* CTA */}
-      <motion.button
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.3 }}
-        onClick={() => setStage("plan")}
-        className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm flex items-center justify-center gap-2 glow-amber hover:opacity-90 active:scale-[0.98] transition-all"
-      >
-        Generate my game day plan
-        <ChevronRight className="w-4 h-4" />
-      </motion.button>
+          {/* CTA */}
+          <motion.button
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            onClick={() => setStage("plan")}
+            className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm flex items-center justify-center gap-2 glow-amber hover:opacity-90 active:scale-[0.98] transition-all"
+          >
+            Generate my game day plan
+            <ChevronRight className="w-4 h-4" />
+          </motion.button>
+        </div>
+      </div>
     </div>
   );
 }
