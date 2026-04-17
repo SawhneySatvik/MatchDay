@@ -1,20 +1,37 @@
 // components/ticket/TicketUpload.tsx
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
 import { motion, AnimatePresence } from "framer-motion";
-import { Upload, Ticket, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { Upload, Ticket, Loader2, CheckCircle2, AlertCircle, Clock, MapPin, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useMatchDayStore } from "@/lib/store";
+import { useMatchDayStore, TicketData } from "@/lib/store";
 import { toast } from "sonner";
+
+const STORAGE_KEY = "matchday_saved_tickets";
 
 type UploadState = "idle" | "loading" | "success" | "error";
 
 export function TicketUpload() {
   const [state, setState] = useState<UploadState>("idle");
   const [preview, setPreview] = useState<string | null>(null);
-  const { setTicket, setStage } = useMatchDayStore();
+  const [mounted, setMounted] = useState(false);
+  const { setTicket, setStage, savedSessions, setSavedSessions, restoreSession } = useMatchDayStore();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  function clearSavedSessions() {
+    setSavedSessions([]);
+    toast.success("Recent sessions cleared");
+  }
+
+  function loadSavedSession(session: any) {
+    restoreSession(session);
+    toast.success(`Resumed ${session.ticket?.match}`);
+  }
 
   const processTicket = async (file: File) => {
     setState("loading");
@@ -212,8 +229,62 @@ export function TicketUpload() {
       >
         Works with IPL, Test matches, ISL, Concerts & more
       </motion.p>
+
+      {/* Saved tickets (Recent Sessions) */}
+      {mounted && savedSessions && savedSessions.length > 0 && state === "idle" && (
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="w-full flex flex-col gap-3"
+        >
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              Recent Sessions
+            </p>
+            <button
+              onClick={clearSavedSessions}
+              className="text-xs text-muted-foreground hover:text-red-400 transition-colors flex items-center gap-1"
+            >
+              <Trash2 className="w-3 h-3" />
+              Clear
+            </button>
+          </div>
+          {savedSessions.map((session, i) => {
+            const ticket = session.ticket;
+            if (!ticket) return null;
+            return (
+              <motion.button
+                key={`${ticket.match}-${ticket.venue}-${i}`}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.45 + i * 0.06 }}
+                onClick={() => loadSavedSession(session)}
+                className="w-full glass rounded-2xl p-4 flex items-center gap-3 text-left hover:bg-card/80 transition-colors active:scale-[0.98]"
+              >
+                <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
+                  <Ticket className="w-4 h-4 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground truncate">{ticket.match}</p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <div className="flex items-center gap-1">
+                      <MapPin className="w-3 h-3 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground truncate">{ticket.venue}</span>
+                    </div>
+                    {ticket.date && ticket.date !== "Not specified" && (
+                      <div className="flex items-center gap-1">
+                        <Clock className="w-3 h-3 text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground">{ticket.date}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </motion.button>
+            );
+          })}
+        </motion.div>
+      )}
     </div>
   );
 }
-
-// TODO(01:12): Build ticket upload UI with file handling

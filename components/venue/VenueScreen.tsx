@@ -19,6 +19,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useMatchDayStore, FoodStall, Gate, RestRoom } from "@/lib/store";
 import { VenueMap } from "@/components/maps/VenueMap";
+import { CrowdPulse } from "@/components/crowd/CrowdPulse";
 import { getVenueData } from "@/data/venues";
 
 type VenueTab = "food" | "gates" | "facilities";
@@ -28,7 +29,7 @@ export function VenueScreen() {
   const [recommendedStalls, setRecommendedStalls] = useState<FoodStall[]>([]);
   const [recommendedGate, setRecommendedGate] = useState<Gate | null>(null);
 
-  const { ticket, preferences, venueInfo, venueCoords, setVenueInfo, setStage } =
+  const { ticket, preferences, venueInfo, venueCoords, crowdData, setVenueInfo, setStage } =
     useMatchDayStore();
 
   // Load venue data on mount
@@ -97,17 +98,17 @@ export function VenueScreen() {
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.1 }}
-              className="lg:sticky lg:top-24"
             >
               <VenueMap
                 venueCoords={venueCoords}
                 venueInfo={venueInfo}
+                crowdData={crowdData}
                 mode="venue"
               />
             </motion.div>
           )}
 
-          {/* AI Seat Tip — shows below map on mobile, pinned on desktop */}
+          {/* AI Seat Tip */}
           {ticket && (
             <motion.div
               initial={{ opacity: 0, y: 8 }}
@@ -136,8 +137,10 @@ export function VenueScreen() {
           )}
         </div>
 
-        {/* Right column: Tabs + Content + CTA */}
+        {/* Right column: Crowd Pulse + Tabs + Content + CTA */}
         <div className="flex flex-col gap-5">
+          {/* Crowd Pulse panel */}
+          <CrowdPulse />
           {/* Tabs */}
           <div className="flex gap-1 bg-muted rounded-xl p-1">
             {TABS.map((tab) => {

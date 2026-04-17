@@ -15,11 +15,14 @@ import {
   MessageCircle,
   X,
   Calendar,
+  RefreshCw,
+  Send,
+  LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMatchDayStore, PlanItem } from "@/lib/store";
 import { StadiumChat } from "@/components/chat/StadiumChat";
-import { getFlashModel } from "@/lib/gemini";
+import { ExitPlanner } from "@/components/plan/ExitPlanner";
 import { toast } from "sonner";
 
 const PLAN_TYPE_CONFIG: Record<
@@ -37,8 +40,10 @@ const PLAN_TYPE_CONFIG: Record<
 export function PlanScreen() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [planUpdateInput, setPlanUpdateInput] = useState("");
+  const [isUpdating, setIsUpdating] = useState(false);
 
-  const { ticket, preferences, selectedTravel, venueInfo, plan, setPlan } =
+  const { ticket, preferences, selectedTravel, venueInfo, plan, setPlan, chatHistory, matchPhase, crowdData, addChatMessage } =
     useMatchDayStore();
 
   useEffect(() => {
@@ -121,6 +126,54 @@ Rules:
       setIsGenerating(false);
     }
   }
+
+  async function handlePlanUpdate(text: string) {
+    if (!text.trim() || isUpdating || !ticket) return;
+    setIsUpdating(true);
+    setPlanUpdateInput("");
+
+    try {
+      const res = await fetch("/api/venue-chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: text.trim(),
+          history: chatHistory,
+          ticket,
+          preferences,
+          venueInfo,
+          plan,
+          matchPhase,
+          crowdData,
+          planUpdate: true,
+        }),
+      });
+
+      if (!res.ok) throw new Error("Update failed");
+      const { response, updatedPlan } = await res.json();
+
+      addChatMessage({ role: "user", content: text.trim(), timestamp: new Date().toISOString() });
+      addChatMessage({ role: "assistant", content: response, timestamp: new Date().toISOString() });
+
+      if (updatedPlan) {
+        setPlan(updatedPlan);
+        toast.success("Plan updated based on your input!");
+      } else {
+        toast.info("AI responded but didn't regenerate the plan.");
+      }
+    } catch {
+      toast.error("Couldn't update plan.");
+    } finally {
+      setIsUpdating(false);
+    }
+  }
+
+  const PLAN_UPDATE_CHIPS = [
+    "We're losing, I want to leave early",
+    "My kid needs food now",
+    "It's raining, need covered route",
+    "Skip the food break",
+  ];
 
   return (
     <div className="flex flex-col gap-5">
@@ -205,9 +258,9 @@ Rules:
                 return (
                   <motion.div
                     key={i}
-                    initial={{ opacity: 0, x: -8 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.07 }}
+                    initial={{ opacity: 0, y: 16, scale: 0.97 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{ delay: i * 0.12, duration: 0.4, ease: "easeOut" }}
                     className="flex gap-4 pb-5 relative"
                   >
                     {/* Icon node */}
@@ -252,6 +305,80 @@ Rules:
                 );
               })}
             </motion.div>
+          )}
+
+          {/* Plan update input */}
+          {!isGenerating && plan.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="flex flex-col gap-3 mt-2"
+            >
+              {/* Divider with label */}
+              <div className="flex items-center gap-3">
+                <div className="flex-1 h-px bg-border" />
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <RefreshCw className="w-3 h-3" />
+                  <span>Update your plan</span>
+                </div>
+                <div className="flex-1 h-px bg-border" />
+              </div>
+
+              {/* Quick update chips */}
+              <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                {PLAN_UPDATE_CHIPS.map((chip) => (
+                  <button
+                    key={chip}
+                    onClick={() => handlePlanUpdate(chip)}
+                    disabled={isUpdating}
+                    className="flex-shrink-0 px-3 py-2 rounded-xl bg-muted text-xs text-muted-foreground hover:bg-muted/80 hover:text-foreground transition-colors border border-border disabled:opacity-50"
+                  >
+                    {chip}
+                  </button>
+                ))}
+              </div>
+
+              {/* Freeform update input */}
+              <div className="flex items-end gap-2 glass rounded-2xl px-4 py-2">
+                <input
+                  type="text"
+                  value={planUpdateInput}
+                  onChange={(e) => setPlanUpdateInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handlePlanUpdate(planUpdateInput);
+                    }
+                  }}
+                  placeholder="Tell me what changed..."
+                  className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none py-2"
+                />
+                <button
+                  onClick={() => handlePlanUpdate(planUpdateInput)}
+                  disabled={!planUpdateInput.trim() || isUpdating}
+                  className={cn(
+                    "w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-all",
+                    planUpdateInput.trim() && !isUpdating
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground"
+                  )}
+                >
+                  {isUpdating ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Send className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Smart Exit Planner */}
+          {!isGenerating && plan.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-border/50">
+              <ExitPlanner />
+            </div>
           )}
 
           {/* Empty / error */}

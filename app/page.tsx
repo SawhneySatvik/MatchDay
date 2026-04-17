@@ -147,6 +147,21 @@ function StageProgressBar() {
             );
           })}
         </div>
+
+        {/* End Session / Home button */}
+        {stage !== "upload" && (
+          <button
+            onClick={() => {
+              if (window.confirm("End current session and return to home?")) {
+                useMatchDayStore.getState().reset();
+              }
+            }}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-xl ml-auto text-xs font-medium bg-destructive/10 text-destructive border border-destructive/20 hover:bg-destructive/20 transition-all active:scale-95 flex-shrink-0"
+          >
+            <span className="hidden sm:inline">End Session</span>
+            <span className="sm:hidden">End</span>
+          </button>
+        )}
       </div>
     </div>
   );

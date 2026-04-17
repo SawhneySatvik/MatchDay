@@ -10,9 +10,9 @@ import {
   useMapsLibrary,
 } from "@vis.gl/react-google-maps";
 import { motion } from "framer-motion";
-import { MapPin, Navigation, Utensils, Cross, DoorOpen } from "lucide-react";
+import { MapPin, Navigation, Utensils, Cross, DoorOpen, Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { VenueInfo, FoodStall, Gate } from "@/lib/store";
+import { VenueInfo, FoodStall, Gate, CrowdZone } from "@/lib/store";
 
 type MapMode = "travel" | "venue";
 
@@ -20,6 +20,7 @@ interface VenueMapProps {
   venueCoords: { lat: number; lng: number };
   userCoords?: { lat: number; lng: number } | null;
   venueInfo?: VenueInfo | null;
+  crowdData?: CrowdZone[] | null;
   mode?: MapMode;
   className?: string;
 }
@@ -71,12 +72,13 @@ function RouteLayer({
 }
 
 // Active filter chip state
-type FilterType = "all" | "food" | "gates" | "medical";
+type FilterType = "all" | "food" | "gates" | "medical" | "crowd";
 
 export function VenueMap({
   venueCoords,
   userCoords,
   venueInfo,
+  crowdData,
   mode = "travel",
   className,
 }: VenueMapProps) {
@@ -97,6 +99,7 @@ export function VenueMap({
     { id: "food", label: "Food" },
     { id: "gates", label: "Gates" },
     { id: "medical", label: "Aid" },
+    ...(crowdData && crowdData.length > 0 ? [{ id: "crowd" as FilterType, label: "Crowd" }] : []),
   ];
 
   return (
@@ -236,6 +239,57 @@ export function VenueMap({
                 </div>
               </AdvancedMarker>
             ))}
+
+          {/* Crowd heatmap overlay */}
+          {crowdData && (activeFilter === "all" || activeFilter === "crowd") &&
+            crowdData.map((zone) => {
+              const colorMap = {
+                LOW: "rgba(52, 211, 153, 0.35)",
+                MEDIUM: "rgba(251, 191, 36, 0.35)",
+                HIGH: "rgba(248, 113, 113, 0.45)",
+              };
+              const borderColorMap = {
+                LOW: "rgba(52, 211, 153, 0.6)",
+                MEDIUM: "rgba(251, 191, 36, 0.6)",
+                HIGH: "rgba(248, 113, 113, 0.7)",
+              };
+              const sizeMap = {
+                LOW: 40,
+                MEDIUM: 55,
+                HIGH: 70,
+              };
+              const size = sizeMap[zone.crowdLevel];
+              // Generate coords offset from venue center if zone coords are 0,0
+              const coords = (zone.coords.lat !== 0 && zone.coords.lng !== 0)
+                ? zone.coords
+                : venueCoords;
+
+              return (
+                <AdvancedMarker
+                  key={`crowd-${zone.zone}`}
+                  position={coords}
+                  title={`${zone.zone}: ${zone.crowdLevel}`}
+                >
+                  <div className="relative flex items-center justify-center">
+                    <div
+                      style={{
+                        width: size,
+                        height: size,
+                        background: `radial-gradient(circle, ${colorMap[zone.crowdLevel]}, transparent 70%)`,
+                        border: `2px solid ${borderColorMap[zone.crowdLevel]}`,
+                        borderRadius: "50%",
+                      }}
+                      className={cn(
+                        "flex items-center justify-center",
+                        zone.crowdLevel === "HIGH" && "animate-pulse"
+                      )}
+                    >
+                      <Activity className="w-3 h-3 text-white opacity-80" />
+                    </div>
+                  </div>
+                </AdvancedMarker>
+              );
+            })}
         </Map>
       </div>
 
@@ -262,6 +316,12 @@ export function VenueMap({
               <span className="text-xs text-muted-foreground">Gate (open)</span>
             </div>
           </>
+        )}
+        {crowdData && crowdData.length > 0 && (
+          <div className="flex items-center gap-1.5">
+            <div className="w-2.5 h-2.5 rounded-full bg-red-400 animate-pulse" />
+            <span className="text-xs text-muted-foreground">Crowd</span>
+          </div>
         )}
       </div>
     </div>

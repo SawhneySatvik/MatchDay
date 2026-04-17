@@ -1,19 +1,86 @@
 // components/chat/StadiumChat.tsx
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Loader2, Sparkles } from "lucide-react";
+import { Send, Loader2, Sparkles, Ticket, User, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useMatchDayStore, ChatMessage } from "@/lib/store";
+import { useMatchDayStore, ChatMessage, MatchPhase } from "@/lib/store";
 import { toast } from "sonner";
 
-const QUICK_PROMPTS = [
-  "Should I grab food now?",
-  "Best gate to exit after match?",
-  "Where's the nearest restroom?",
-  "Update my plan for halftime",
-];
+const PHASE_PROMPTS: Record<MatchPhase, string[]> = {
+  "pre-match": [
+    "Best time to arrive?",
+    "Food queue status?",
+    "Which gate should I use?",
+    "What to bring?",
+  ],
+  during: [
+    "Should I grab food now?",
+    "Restroom break strategy",
+    "Update score in my plan",
+    "Where's the nearest restroom?",
+  ],
+  "post-match": [
+    "Plan my exit now",
+    "Best gate to leave?",
+    "Cab booking tip",
+    "Update my plan — leaving early",
+  ],
+};
+
+function ContextChipBar() {
+  const { ticket, preferences } = useMatchDayStore();
+
+  if (!ticket) return null;
+
+  const chips: { emoji: string; text: string }[] = [];
+
+  // Ticket info
+  if (ticket.gate && ticket.gate !== "Not specified") {
+    chips.push({ emoji: "🎟️", text: `${ticket.gate} · ${ticket.section || ticket.stand}${ticket.seat && ticket.seat !== "Not specified" ? ` · Seat ${ticket.seat}` : ""}` });
+  }
+
+  // Preferences
+  const prefParts: string[] = [];
+  if (preferences.foodPreference === "veg") prefParts.push("Vegetarian");
+  if (preferences.foodPreference === "non-veg") prefParts.push("Non-veg");
+  if (preferences.accessibilityNeeds) prefParts.push("Accessibility");
+  if (preferences.priorities.includes("food")) prefParts.push("Food priority");
+  if (prefParts.length > 0) {
+    chips.push({ emoji: "👤", text: prefParts.join(" · ") });
+  }
+
+  // Location
+  if (preferences.location) {
+    const shortLoc = preferences.location.length > 20
+      ? preferences.location.substring(0, 20) + "…"
+      : preferences.location;
+    chips.push({ emoji: "📍", text: `From ${shortLoc}` });
+  }
+
+  if (chips.length === 0) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -4 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="px-4 pt-3 pb-2"
+    >
+      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+        {chips.map((chip, i) => (
+          <div
+            key={i}
+            className="flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-muted/60 border border-border/50 backdrop-blur-sm"
+          >
+            <span className="text-xs">{chip.emoji}</span>
+            <span className="text-xs text-muted-foreground whitespace-nowrap">{chip.text}</span>
+          </div>
+        ))}
+      </div>
+    </motion.div>
+  );
+}
 
 export function StadiumChat() {
   const [input, setInput] = useState("");
@@ -21,24 +88,39 @@ export function StadiumChat() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  const { ticket, preferences, venueInfo, plan, chatHistory, addChatMessage, setPlan } =
-    useMatchDayStore();
+  const {
+    ticket,
+    preferences,
+    venueInfo,
+    plan,
+    chatHistory,
+    matchPhase,
+    crowdData,
+    addChatMessage,
+    setPlan,
+  } = useMatchDayStore();
+
+  const quickPrompts = useMemo(() => PHASE_PROMPTS[matchPhase] || PHASE_PROMPTS["pre-match"], [matchPhase]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatHistory]);
 
-  async function sendMessage(text: string) {
+  async function sendMessage(text: string, planUpdate = false) {
     if (!text.trim() || isLoading || !ticket) return;
 
     const userMsg: ChatMessage = {
       role: "user",
       content: text.trim(),
-      timestamp: new Date(),
+      timestamp: new Date().toISOString(),
     };
     addChatMessage(userMsg);
     setInput("");
     setIsLoading(true);
+
+    // Detect plan-update intent from keywords
+    const updateKeywords = ["update", "plan", "leaving", "leave early", "change", "raining", "food now", "kid", "score"];
+    const isPlanUpdate = planUpdate || updateKeywords.some((kw) => text.toLowerCase().includes(kw));
 
     try {
       const res = await fetch("/api/venue-chat", {
@@ -51,6 +133,9 @@ export function StadiumChat() {
           preferences,
           venueInfo,
           plan,
+          matchPhase,
+          crowdData,
+          planUpdate: isPlanUpdate,
         }),
       });
 
@@ -60,7 +145,7 @@ export function StadiumChat() {
       addChatMessage({
         role: "assistant",
         content: response,
-        timestamp: new Date(),
+        timestamp: new Date().toISOString(),
       });
 
       if (updatedPlan) {
@@ -83,6 +168,9 @@ export function StadiumChat() {
 
   return (
     <div className="flex flex-col h-full">
+      {/* Context chip bar — shows what the AI knows */}
+      <ContextChipBar />
+
       {/* Message list */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
         {chatHistory.length === 0 && (
@@ -98,7 +186,7 @@ export function StadiumChat() {
               Your stadium concierge is ready
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              Ask anything about your game day
+              I know your seat, preferences, and plan. Ask me anything!
             </p>
           </motion.div>
         )}
@@ -159,11 +247,11 @@ export function StadiumChat() {
         <div ref={bottomRef} />
       </div>
 
-      {/* Quick prompts */}
+      {/* Match-phase-aware quick prompts */}
       {chatHistory.length < 2 && (
         <div className="px-4 pb-3">
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-            {QUICK_PROMPTS.map((prompt) => (
+            {quickPrompts.map((prompt) => (
               <button
                 key={prompt}
                 onClick={() => sendMessage(prompt)}
@@ -210,5 +298,3 @@ export function StadiumChat() {
     </div>
   );
 }
-
-// TODO(01:12): Build stadium assistant chat interface

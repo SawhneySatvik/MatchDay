@@ -1,14 +1,17 @@
 // app/api/venue-chat/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { getFlashModel, parseGeminiJSON } from "@/lib/gemini";
-import { ChatMessage, TicketData, UserPreferences, VenueInfo, PlanItem } from "@/lib/store";
+import { ChatMessage, TicketData, UserPreferences, VenueInfo, PlanItem, CrowdZone, MatchPhase } from "@/lib/store";
 
 // SAVE TO PROMPT LIBRARY
 const SYSTEM_CONTEXT = (
   ticket: TicketData,
   preferences: UserPreferences,
   venueInfo: VenueInfo | null,
-  plan: PlanItem[]
+  plan: PlanItem[],
+  matchPhase?: MatchPhase,
+  crowdData?: CrowdZone[] | null,
+  planUpdate?: boolean
 ) => `You are MatchDay AI — a personal game-day concierge. You know everything about this fan's day.
 
 FAN CONTEXT:
@@ -21,24 +24,33 @@ FAN CONTEXT:
 - Priorities: ${preferences.priorities.join(", ")}
 - Do Not Miss: ${preferences.doNotMiss.join(", ") || "Nothing specified"}
 - Accessibility Needs: ${preferences.accessibilityNeeds ? "Yes" : "No"}
+- Location: ${preferences.location || "Not specified"}
+
+MATCH PHASE: ${matchPhase || "pre-match"}
 
 VENUE FACILITIES:
 ${venueInfo ? JSON.stringify(venueInfo, null, 2) : "Venue data loading..."}
 
+${crowdData ? `LIVE CROWD INTELLIGENCE:
+${crowdData.map(z => `- ${z.zone}: ${z.crowdLevel} crowd, ~${z.estimatedWait} wait`).join("\n")}` : ""}
+
 CURRENT GAME DAY PLAN:
-${plan.length > 0 ? plan.map((p) => `${p.time}: ${p.title}`).join("\n") : "Plan not yet generated"}
+${plan.length > 0 ? plan.map((p) => p.time + ": " + p.title + " — " + p.description).join("\n") : "Plan not yet generated"}
 
 RULES:
 - Give specific, actionable advice referencing the fan's actual seat and preferences
 - For food recommendations, always respect their ${preferences.foodPreference} preference
-- When updating the plan, return a JSON block: {"updatedPlan": [...]} 
+- When the fan asks to update their plan or mentions changing circumstances, return a full updated plan as: {"updatedPlan": [...]}
+  Each plan item must have: time, title, description, type (travel|arrive|food|seat|event|break), reasoning
+${planUpdate ? "- The fan is requesting a plan update. You MUST return an updatedPlan JSON with the regenerated timeline from this point forward, adapting to their new request." : ""}
 - Keep responses concise and friendly — this is a mobile interface
 - Reference specific stalls/gates by name, not generically
-- If asked about timing, always reason based on the kickoff time`;
+- If asked about timing, always reason based on the kickoff time
+- Use the crowd intelligence data when advising about best times and routes`;
 
 export async function POST(req: NextRequest) {
   try {
-    const { message, history, ticket, preferences, venueInfo, plan } =
+    const { message, history, ticket, preferences, venueInfo, plan, matchPhase, crowdData, planUpdate } =
       await req.json();
 
     const model = getFlashModel();
@@ -46,7 +58,7 @@ export async function POST(req: NextRequest) {
       history: [
         {
           role: "user",
-          parts: [{ text: SYSTEM_CONTEXT(ticket, preferences, venueInfo, plan) }],
+          parts: [{ text: SYSTEM_CONTEXT(ticket, preferences, venueInfo, plan, matchPhase, crowdData, planUpdate) }],
         },
         {
           role: "model",
