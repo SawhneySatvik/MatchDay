@@ -1,0 +1,22 @@
+# dependencies
+node_modules
+
+# next.js
+.next
+
+# vcs
+.git
+.gitignore
+
+# local env files
+.env
+.env.*
+!.env.example
+!.env.local.example
+
+# docs and misc
+README.md
+*.log
+npm-debug.log*
+.DS_Store
+.vscode

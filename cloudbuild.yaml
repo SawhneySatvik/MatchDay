@@ -1,0 +1,40 @@
+substitutions:
+  _SERVICE_NAME: matchday
+  _REGION: us-central1
+  _AR_REPO: matchday
+  _RUNTIME_SA: matchday-runtime
+  _NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: ""
+
+steps:
+  - id: Build image
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --build-arg
+      - NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=${_NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}
+      - -t
+      - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE_NAME}:${SHORT_SHA}
+      - .
+
+  - id: Push image
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE_NAME}:${SHORT_SHA}
+
+  - id: Deploy to Cloud Run
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_SERVICE_NAME}
+      - --image=${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE_NAME}:${SHORT_SHA}
+      - --region=${_REGION}
+      - --platform=managed
+      - --allow-unauthenticated
+      - --service-account=${_RUNTIME_SA}@${PROJECT_ID}.iam.gserviceaccount.com
+      - --set-secrets=GEMINI_API_KEY=GEMINI_API_KEY:latest
+
+images:
+  - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE_NAME}:${SHORT_SHA}

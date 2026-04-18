@@ -26,24 +26,6 @@ Built for PromptWars Virtual by Hack2Skill x Google for Developers.
 
 ---
 
-## Local setup
-
-```bash
-# 1. Clone and install
-git clone https://github.com/your-repo/matchday
-cd matchday
-npm install
-
-# 2. Set env vars
-cp .env.local.example .env.local
-# Fill in GEMINI_API_KEY and NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
-
-# 3. Run
-npm run dev
-```
-
----
-
 ## API keys needed
 
 ### Gemini API key
