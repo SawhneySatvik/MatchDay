@@ -2,7 +2,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
-export type Stage = "upload" | "onboarding" | "travel" | "venue" | "plan" | "live";
+export type Stage = "landing" | "upload" | "onboarding" | "travel" | "venue" | "plan" | "live";
 export type MatchPhase = "pre-match" | "during" | "post-match";
 
 // Session expiry: 2 days in milliseconds
@@ -169,7 +169,7 @@ const defaultPreferences: UserPreferences = {
 };
 
 const defaultState = {
-  stage: "upload" as Stage,
+  stage: "landing" as Stage,
   ticket: null,
   preferences: defaultPreferences,
   travelOptions: [] as TravelOption[],
@@ -274,6 +274,9 @@ export const useMatchDayStore = create<MatchDayStore>()(
               state.reset();
               state.setSavedSessions(savedSessions);
             }
+          }
+          if (!state.ticket && state.stage !== "landing") {
+            state.setStage("landing");
           }
         };
       },

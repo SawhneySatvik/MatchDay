@@ -21,6 +21,7 @@
         "name": "next"
       }
     ],
+    "baseUrl": ".",
     "paths": {
       "@/*": [
         "./*"
@@ -38,5 +39,3 @@
     "node_modules"
   ]
 }
-
-// TODO(01:12): Initialize Next.js project with TypeScript setup

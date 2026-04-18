@@ -4,6 +4,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, Ticket, Settings2, Route, MapPin, CalendarCheck } from "lucide-react";
 import { useMatchDayStore, Stage } from "@/lib/store";
+import { LandingPage } from "@/components/landing/LandingPage";
 import { TicketUpload } from "@/components/ticket/TicketUpload";
 import { OnboardingScreen } from "@/components/onboarding/OnboardingScreen";
 import { TravelScreen } from "@/components/travel/TravelScreen";
@@ -37,6 +38,15 @@ const PREV_STAGE: Record<string, Stage> = {
 
 export default function Home() {
   const { stage } = useMatchDayStore();
+
+  if (stage === "landing") {
+    return (
+      <main className="min-h-screen bg-background flex flex-col">
+        <LandingPage />
+      </main>
+    );
+  }
+
   const StageComponent = STAGE_COMPONENTS[stage];
 
   return (
